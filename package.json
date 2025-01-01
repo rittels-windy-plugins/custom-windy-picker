@@ -1,11 +1,11 @@
 {
   "name": "custom-windy-picker",
   "type": "module",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Custom Windy Picker,  for windy-plugins",
   "repository": {
     "type": "git",
-    "url": "https://github.com/username/rittels-windy-plugins/custom-windy-picker.git"
+    "url": "https://github.com/rittels-windy-plugins/custom-windy-picker.git"
   },
   "main": "picker-src/picker.js",
   "scripts": {
