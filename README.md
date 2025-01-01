@@ -6,11 +6,13 @@ It includes a drag listener and allows you to add content to the picker.
 
 How to use it:
 
+To installed and added to `package.json`:
+
 ```
-npm install custom-windy-picker.   
+npm install custom-windy-picker
 ```  
 
-Will be installed and added to `package.json`.  
+In your plugin.svelte,  or any other modules:  
 
 ```
 import { getPickerMarker } from 'custom-windy-picker';
@@ -37,7 +39,7 @@ getPickerMarker creates a leaflet marker,  if it has not yet been made,  or gets
 - getLeftPlugin(): returns plugin-name
 - same for RightPlugin 
 
-Notes:
+<u>Notes:</u>
 
 Opening,  moving or closing the plugin,  will also trigger the internal windy eventer,  thus will trigger `picker.on('opened', cbf)`  and `'closed'` and `'moved'`.   
 
