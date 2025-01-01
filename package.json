@@ -1,8 +1,12 @@
 {
   "name": "custom-windy-picker",
   "type": "module",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Custom Windy Picker,  for windy-plugins",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/username/my-awesome-module.git"
+  },
   "main": "picker-src/picker.js",
   "scripts": {
     "start" : "node less2css.js",
