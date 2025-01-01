@@ -1,18 +1,18 @@
-# custom-windy-picker
+# __custom-windy-picker__
 
 This is a custom windy picker made for plugins.
 
 It includes a drag listener and allows you to add content to the picker.  
 
-How to use it:
+## How to use it:
 
-To installed and added to `package.json`:
+To installed it and add to `package.json`:
 
 ```
 npm install custom-windy-picker
 ```  
 
-In your plugin.svelte,  or any other modules:  
+In your plugin.svelte,  or any other modules where you need it:  
 
 ```
 import { getPickerMarker } from 'custom-windy-picker';
@@ -39,10 +39,14 @@ getPickerMarker creates a leaflet marker,  if it has not yet been made,  or gets
 - getLeftPlugin(): returns plugin-name
 - same for RightPlugin 
 
-<u>Notes:</u>
+## Notes:
 
 Opening,  moving or closing the plugin,  will also trigger the internal windy eventer,  thus will trigger `picker.on('opened', cbf)`  and `'closed'` and `'moved'`.   
 
 If the picker.less is changed,  run less2css.js,  to write the new src/pickerCss.js.
 
 You are welcome to use it,  but **if you change the code,  DO NOT attach it to `W.plugins['custom-picker-for-windy-plugins']`,  else you will mess up my plugins**.
+
+If you use it in an embedded plugin,  there are some finicky things to be aware of,  see my `windy-plugin-demo`.
+
+
