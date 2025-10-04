@@ -70,6 +70,8 @@ function getPickerMarker() {
         let html = `<div class="picker-lines noselect"></div>
         <div class="picker-content noselect">
             <span data-ref="content"></span>
+            <div class="elevation hide-on-picker-drag" data-ref="elevation"></div>
+           
             <a class="picker-link iconfont tooltip-down hide-on-picker-drag" data-do="detail" data-tooltip="${t.D_FCST}"
                 >?</a
             >
@@ -139,6 +141,7 @@ function getPickerMarker() {
 
             updateInterFun();
             onMetricChanged();
+            addElevation();
             //getValuesAndRender();
 
             // add listeners.
@@ -146,11 +149,13 @@ function getPickerMarker() {
             bcast.on('metricChanged', onMetricChanged);
             store.on('product', invalidateInterFun);
             store.on('latlon', onLatLonChange);
+            store.on('showPickerElevation', onShowPickerElevation);
+
             map.on('drag', checkIfMapCrossedAntiM);
 
             marker.openFxs?.forEach(f => f.cbf(latLon));
 
-            document.body.classList.add('onpicker' );  // should be onpicker-custom??
+            document.body.classList.add('onpicker');  // should be onpicker-custom??
 
             // do this last
             pickerEmitter.emit(
@@ -171,12 +176,13 @@ function getPickerMarker() {
             bcast.off('metricChanged', onMetricChanged);
             store.off('product', invalidateInterFun);
             store.off('latlon', onLatLonChange);
+            store.off('showPickerElevation', onShowPickerElevation);
             map.off('drag', checkIfMapCrossedAntiM);
             marker.isOpen = false;
             clickHandlersAdded = false;
             setPickerLocation(null);
 
-            document.body.classList.remove('onpicker' );  // should be onpicker-custom??
+            document.body.classList.remove('onpicker');  // should be onpicker-custom??
 
             marker.closeFxs?.forEach(f => f.cbf(latLon));
         }
@@ -206,6 +212,17 @@ function getPickerMarker() {
         addPickerCtrl(marker);
 
         return marker;
+    }
+}
+
+function addElevation() {
+    if(!store.get('showPickerElevation')) return;
+    let coords = marker.getLatLng();
+    if (coords) {
+        W.http.get(`services/elevation/${coords.lat}/${coords.lng}`).then(({ data }) => {
+            let el = $('[data-ref="elevation"]', $('.custom-picker'));
+            if (el) el.innerHTML = `${data}m, ${Math.round(data * 3.28084)}ft`;
+        })
     }
 }
 
@@ -255,6 +272,7 @@ function getValuesAndRender() {
     // this method is throttled and debounced, marker can be closed already, chech it for to be sure
     const coords = marker.getLatLng();
     const values = interpolateLatLon({ lat: coords.lat, lon: coords.lng });
+
     render(values, coords);
     setPickerLocation(coords);
 }
@@ -275,10 +293,9 @@ function getInterpolator() {
     invalidateInterFun();
     return new Promise((resolve, rej) => {
         // in mobile,  if mobile picker is open,  getInterpolator inside the mobile picker does nothing,  unless within a setTimeout.
+        // this is due to a windy bug
         setTimeout(() => {
             getLatLonInterpolator().then((interFun) => {
-                //console.log("try to show the func");
-                //console.dir(interFun); 
                 interpolateLatLon = interFun;
                 resolve();
             }, 10)
@@ -298,11 +315,13 @@ function invalidateInterFun() {
 
 function dragstart() {
     document.body.classList.add('picker-dragging');
+    $('[data-ref="elevation"]', $('.custom-picker')).innerHTML = ' ';
 }
 
 function dragend() {
     document.body.classList.remove('picker-dragging');
     update();
+    addElevation();
     pickerEmitter.emit('pickerMoved', marker.getParams());
 }
 
