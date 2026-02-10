@@ -1,27 +1,39 @@
 // mostly copied and slightly simplified windy DESKTOP picker.  // I am not bothering with mobile for now.
 
-import { map } from '@windy/map';
-import plugins from '@windy/plugins';
-import bcast from '@windy/broadcast';
-import store from '@windy/store';
-import { t } from '@windy/trans';
-import rs from '@windy/rootScope';
+import { map } from "@windy/map";
+import plugins from "@windy/plugins";
+import bcast from "@windy/broadcast";
+import store from "@windy/store";
+import { t } from "@windy/trans";
+import rs from "@windy/rootScope";
 
-import { $, copy2clipboard, debounce, logError, normalizeLatLon, throttle } from '@windy/utils';
-import { getLatLonInterpolator } from '@windy/interpolator';
-import overlays from '@windy/overlays';
-import * as format from '@windy/format';
-import { emitter as pickerEmitter } from '@windy/picker';
+import {
+    $,
+    copy2clipboard,
+    debounce,
+    logError,
+    normalizeLatLon,
+    throttle,
+} from "@windy/utils";
+import { getLatLonInterpolator } from "@windy/interpolator";
+import overlays from "@windy/overlays";
+import * as format from "@windy/format";
+import { emitter as pickerEmitter } from "@windy/picker";
 
-import { addPickerCtrl } from './pickerCtrl.js';
-import { insertPickerCss, removePickerCss } from './pickerCss.js';
+import { addPickerCtrl } from "./pickerCtrl.js";
+import { insertPickerCss, removePickerCss } from "./pickerCss.js";
 
 /**
  * Leaflet marker with added methods
  */
 let marker;
 
-let formatDir, pickerContentEl, isZooming, interpolateLatLon, displayLatLon;
+let formatDir,
+    pickerContentEl,
+    isZooming,
+    interpolateLatLon,
+    displayLatLon,
+    displayPickerElevation;
 
 let clickHandlersAdded = false;
 
@@ -37,7 +49,7 @@ function checkIfMapCrossedAntiM() {
     }
 }
 
-/** return leaflet marker already made,  or initialize it and add custom methods  
+/** return leaflet marker already made,  or initialize it and add custom methods
  * @returns
  *  The marker has the following methods:
  * - openMarker(latLon)
@@ -55,14 +67,12 @@ function checkIfMapCrossedAntiM() {
  * - addLeftPlugin(plugin-name)
  * - remLeftPlugin(plugin-name)
  * - getLeftPlugin(): returns plugin-name
- * - same for RightPlugin 
-*/
+ * - same for RightPlugin
+ */
 function getPickerMarker() {
-
-    if (plugins['custom-picker-for-windy-plugins']) {
-        return plugins['custom-picker-for-windy-plugins'];
+    if (plugins["custom-picker-for-windy-plugins"]) {
+        return plugins["custom-picker-for-windy-plugins"];
     } else {
-
         // create picker
 
         insertPickerCss();
@@ -87,24 +97,30 @@ function getPickerMarker() {
         </div>`;
 
         const icon = L.divIcon({
-            className: 'custom-picker open',
+            className: "custom-picker open",
             html,
             iconSize: [0, 125],
             iconAnchor: [0, 125],
         });
 
-        marker = L.marker([0, 0], { icon: icon, draggable: true, zIndexOffset: 800 })
-            .on('dragstart', dragstart)
-            .on('drag', throttledUpdate)
-            .on('dragend', dragend);
+        marker = L.marker([0, 0], {
+            icon: icon,
+            draggable: true,
+            zIndexOffset: 800,
+        })
+            .on("dragstart", dragstart)
+            .on("drag", throttledUpdate)
+            .on("dragend", dragend);
 
-        plugins['custom-picker-for-windy-plugins'] = marker;
+        plugins["custom-picker-for-windy-plugins"] = marker;
 
         // add methods to picker marker
 
         marker.openMarker = (latLon) => {
             latLon.source = "custom-picker";
-            const emitMessage = map.hasLayer(marker) ? 'pickerMoved' : 'pickerOpened';
+            const emitMessage = map.hasLayer(marker)
+                ? "pickerMoved"
+                : "pickerOpened";
 
             marker.setLatLng([latLon.lat, latLon.lon || latLon.lng]);
 
@@ -112,32 +128,43 @@ function getPickerMarker() {
             marker.addTo(map);
 
             marker.isOpen = true;
-            displayLatLon = store.get('latlon');
+            displayLatLon = store.get("latlon");
+            displayPickerElevation = store.get("showPickerElevation");
 
             // cannot add clickhandlres until marker has been added to the map the 1st time.
             if (!clickHandlersAdded) {
-                $('.picker-close-button', $('.custom-picker')).addEventListener("click", marker.removeMarker);
+                $(".picker-close-button", $(".custom-picker")).addEventListener(
+                    "click",
+                    marker.removeMarker,
+                );
 
-                $('.picker-content', $('.custom-picker')).addEventListener("click", e => {
-                    e.stopPropagation();
-                    if (e.target.dataset.do == "detail") {
-                        bcast.emit("rqstOpen", "detail", marker.getParams());
-                        marker.removeMarker();
-                        return
-                    };
-                    if (displayLatLon) {
-                        let latLon = marker.getParams();
-                        if (latLon) {
-                            let txt = `${normalizeLatLon(latLon.lat)}, ${normalizeLatLon(latLon.lon)}`;
-                            copy2clipboard(txt);
-                            console.log("Copied to clipboard", txt);
+                $(".picker-content", $(".custom-picker")).addEventListener(
+                    "click",
+                    (e) => {
+                        e.stopPropagation();
+                        if (e.target.dataset.do == "detail") {
+                            bcast.emit(
+                                "rqstOpen",
+                                "detail",
+                                marker.getParams(),
+                            );
+                            marker.removeMarker();
+                            return;
                         }
-                    }
-                })
+                        if (displayLatLon) {
+                            let latLon = marker.getParams();
+                            if (latLon) {
+                                let txt = `${normalizeLatLon(latLon.lat)}, ${normalizeLatLon(latLon.lon)}`;
+                                copy2clipboard(txt);
+                                console.log("Copied to clipboard", txt);
+                            }
+                        }
+                    },
+                );
                 clickHandlersAdded = true;
             }
 
-            pickerContentEl = $('[data-ref="content"]', $('.custom-picker'));
+            pickerContentEl = $('[data-ref="content"]', $(".custom-picker"));
 
             updateInterFun();
             onMetricChanged();
@@ -145,47 +172,44 @@ function getPickerMarker() {
             //getValuesAndRender();
 
             // add listeners.
-            bcast.on('redrawFinished', updateInterFun,);
-            bcast.on('metricChanged', onMetricChanged);
-            store.on('product', invalidateInterFun);
-            store.on('latlon', onLatLonChange);
-            store.on('showPickerElevation', onShowPickerElevation);
+            bcast.on("redrawFinished", updateInterFun);
+            bcast.on("metricChanged", onMetricChanged);
+            store.on("product", invalidateInterFun);
+            store.on("latlon", onLatLonChange);
+            store.on("showPickerElevation", onShowPickerElevation);
 
-            map.on('drag', checkIfMapCrossedAntiM);
+            map.on("drag", checkIfMapCrossedAntiM);
 
-            marker.openFxs?.forEach(f => f.cbf(latLon));
+            marker.openFxs?.forEach((f) => f.cbf(latLon));
 
-            document.body.classList.add('onpicker');  // should be onpicker-custom??
+            document.body.classList.add("onpicker"); // should be onpicker-custom??
 
             // do this last
-            pickerEmitter.emit(
-                emitMessage,
-                latLon
-            );
-        }
+            pickerEmitter.emit(emitMessage, latLon);
+        };
 
         marker.removeMarker = (e) => {
             let latLon = marker.getParams();
             e?.stopPropagation();
             marker?.remove();
 
-            pickerEmitter.emit('pickerClosed', latLon);
+            pickerEmitter.emit("pickerClosed", latLon);
 
             // add listeners.
-            bcast.off('redrawFinished', updateInterFun,);
-            bcast.off('metricChanged', onMetricChanged);
-            store.off('product', invalidateInterFun);
-            store.off('latlon', onLatLonChange);
-            store.off('showPickerElevation', onShowPickerElevation);
-            map.off('drag', checkIfMapCrossedAntiM);
+            bcast.off("redrawFinished", updateInterFun);
+            bcast.off("metricChanged", onMetricChanged);
+            store.off("product", invalidateInterFun);
+            store.off("latlon", onLatLonChange);
+            store.off("showPickerElevation", onShowPickerElevation);
+            map.off("drag", checkIfMapCrossedAntiM);
             marker.isOpen = false;
             clickHandlersAdded = false;
             setPickerLocation(null);
 
-            document.body.classList.remove('onpicker');  // should be onpicker-custom??
+            document.body.classList.remove("onpicker"); // should be onpicker-custom??
 
-            marker.closeFxs?.forEach(f => f.cbf(latLon));
-        }
+            marker.closeFxs?.forEach((f) => f.cbf(latLon));
+        };
 
         marker.getParams = () => {
             if (!marker.isOpen) return null;
@@ -193,21 +217,21 @@ function getPickerMarker() {
             return {
                 lat: latLng.lat,
                 lon: latLng.lng,
-                source: 'custom-picker',
+                source: "custom-picker",
             };
-        }
+        };
 
-        /** remove picker marker,  destroy marker object and remove the css  
-         * This is called internally,  when no listeners attached to picker and the 
-         * left and rightPlugins arrays are empty 
+        /** remove picker marker,  destroy marker object and remove the css
+         * This is called internally,  when no listeners attached to picker and the
+         * left and rightPlugins arrays are empty
          */
         marker.destroyMarker = () => {
             if (marker?.isOpen) marker.removeMarker();
             marker = null;
-            plugins['custom-picker-for-windy-plugins'] = null;
+            plugins["custom-picker-for-windy-plugins"] = null;
             clickHandlersAdded = false;
             removePickerCss();
-        }
+        };
 
         addPickerCtrl(marker);
 
@@ -216,13 +240,20 @@ function getPickerMarker() {
 }
 
 function addElevation() {
-    if(!store.get('showPickerElevation')) return;
+    let el = $('[data-ref="elevation"]', $(".custom-picker"));
+    if (!el) return;
+    if (!displayPickerElevation) {
+        el.innerHTML = "";
+        return;
+    }
     let coords = marker.getLatLng();
     if (coords) {
-        W.http.get(`services/elevation/${coords.lat}/${coords.lng}`).then(({ data }) => {
-            let el = $('[data-ref="elevation"]', $('.custom-picker'));
-            if (el) el.innerHTML = `${data}m, ${Math.round(data * 3.28084)}ft`;
-        })
+        W.http
+            .get(`services/elevation/${coords.lat}/${coords.lng}`)
+            .then(({ data }) => {
+                if (el)
+                    el.innerHTML = `${data}m, ${Math.round(data * 3.28084)}ft`;
+            });
     }
 }
 
@@ -236,15 +267,19 @@ function onLatLonChange(d) {
     getValuesAndRender();
 }
 
+function onShowPickerElevation(d) {
+    displayPickerElevation = d;
+    addElevation();
+}
+
 function createHTML(values, coords) {
-    const overlay = store.get('overlay');
+    const overlay = store.get("overlay");
     let text = overlays[overlay].createPickerHTML(values, formatDir);
 
     if (displayLatLon && coords) {
         const crds = format.DD2DMS(coords.lat, wrapLn(coords.lon));
         text += `<a class="picker-latlon" id="coords-to-clipboard" data-tooltip="${t.COPY_TO_C}">${crds}</a>`;
     }
-
     return text;
 }
 
@@ -254,7 +289,7 @@ function render(values, coords) {
     }
     // NaN no data value
     else {
-        pickerContentEl.innerHTML = '';
+        pickerContentEl.innerHTML = "";
     }
 }
 
@@ -263,17 +298,19 @@ function wrapLn(ln) {
 }
 
 function setPickerLocation(coords) {
-    let pickerLoc = coords ? { lat: coords.lat, lon: wrapLn(coords.lng) } : null;
+    let pickerLoc = coords
+        ? { lat: coords.lat, lon: wrapLn(coords.lng) }
+        : null;
 
-    store.set('pickerLocation', pickerLoc);
+    store.set("pickerLocation", pickerLoc);
 }
 
 function getValuesAndRender() {
     // this method is throttled and debounced, marker can be closed already, chech it for to be sure
     const coords = marker.getLatLng();
-    const values = interpolateLatLon({ lat: coords.lat, lon: coords.lng });
-
-    render(values, coords);
+    interpolateLatLon({ lat: coords.lat, lon: coords.lng }).then(
+        (values) => render(values, coords),
+    );
     setPickerLocation(coords);
 }
 
@@ -282,7 +319,8 @@ const debouncedUpdate = debounce(getValuesAndRender, 150);
 
 /** actually really debounced update */
 function update() {
-    if (isZooming) {   // todo not useing isZooming.   figure out what is point of isZooming??
+    if (isZooming) {
+        // todo not useing isZooming.   figure out what is point of isZooming??
         return;
     }
     // when staying at any point, we want to show the most up-to-date value, so debounce
@@ -298,7 +336,7 @@ function getInterpolator() {
             getLatLonInterpolator().then((interFun) => {
                 interpolateLatLon = interFun;
                 resolve();
-            }, 10)
+            }, 10);
         }, 0);
     });
 }
@@ -314,20 +352,15 @@ function invalidateInterFun() {
 }
 
 function dragstart() {
-    document.body.classList.add('picker-dragging');
-    $('[data-ref="elevation"]', $('.custom-picker')).innerHTML = ' ';
+    document.body.classList.add("picker-dragging");
+    $('[data-ref="elevation"]', $(".custom-picker")).innerHTML = " ";
 }
 
 function dragend() {
-    document.body.classList.remove('picker-dragging');
+    document.body.classList.remove("picker-dragging");
     update();
     addElevation();
-    pickerEmitter.emit('pickerMoved', marker.getParams());
+    pickerEmitter.emit("pickerMoved", marker.getParams());
 }
 
-
-export { getPickerMarker }
-
-
-
-
+export { getPickerMarker };
