@@ -189,6 +189,8 @@ function getPickerMarker() {
         };
 
         marker.removeMarker = (e) => {
+            if (!map.hasLayer(marker)) return;  // already removed
+
             let latLon = marker.getParams();
             e?.stopPropagation();
             marker?.remove();
