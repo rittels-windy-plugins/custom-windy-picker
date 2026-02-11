@@ -96,14 +96,14 @@ function getPickerMarker() {
 
         </div>`;
 
-        const icon = L.divIcon({
+        const icon = new L.DivIcon({
             className: "custom-picker open",
             html,
             iconSize: [0, 125],
             iconAnchor: [0, 125],
         });
 
-        marker = L.marker([0, 0], {
+        marker = new L.Marker([0, 0], {
             icon: icon,
             draggable: true,
             zIndexOffset: 800,
