@@ -188,8 +188,10 @@ function getPickerMarker() {
             pickerEmitter.emit(emitMessage, latLon);
         };
 
+        marker.open = openMarker;
+
         marker.removeMarker = (e) => {
-            if (!map.hasLayer(marker)) return;  // already removed
+            if (!map.hasLayer(marker)) return; // already removed
 
             let latLon = marker.getParams();
             e?.stopPropagation();
@@ -310,8 +312,8 @@ function setPickerLocation(coords) {
 function getValuesAndRender() {
     // this method is throttled and debounced, marker can be closed already, chech it for to be sure
     const coords = marker.getLatLng();
-    interpolateLatLon({ lat: coords.lat, lon: coords.lng }).then(
-        (values) => render(values, coords),
+    interpolateLatLon({ lat: coords.lat, lon: coords.lng }).then((values) =>
+        render(values, coords),
     );
     setPickerLocation(coords);
 }
