@@ -22,7 +22,7 @@ getPickerMarker creates a leaflet marker,  if it has not yet been made,  or gets
 
 `marker` then has the following methods:
 
-- openMarker(latLon)
+- openMarker(latLon),  or just open(latLon):   this allows `W.broadcast.fire("rqstOpen","custom-marker-for-windy-plugins", {lat,lon})`
 - removeMarker()
 - getParams() : _returns latLon with source:  'custom-picker'.  If the picker is not open (!marker.isOpen),  will return null_
 - destroyMarker() : _Called internally when custom-picker is no longer used.  Detected with checkIfMustClose()_

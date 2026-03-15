@@ -52,7 +52,7 @@ function checkIfMapCrossedAntiM() {
 /** return leaflet marker already made,  or initialize it and add custom methods
  * @returns
  *  The marker has the following methods:
- * - openMarker(latLon)
+ * - openMarker(latLon),  also open(latLon)
  * - removeMarker()
  * - getParams() : returns latLon with source:'custom-picker'
  * - destroyMarker() : Called internally when custom-picker is no longer used.  Detected with checkIfMustClose()
@@ -188,7 +188,7 @@ function getPickerMarker() {
             pickerEmitter.emit(emitMessage, latLon);
         };
 
-        marker.open = openMarker;
+        marker.open = marker.openMarker;
 
         marker.removeMarker = (e) => {
             if (!map.hasLayer(marker)) return; // already removed

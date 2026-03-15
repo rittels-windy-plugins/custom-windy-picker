@@ -1,7 +1,7 @@
 {
   "name": "custom-windy-picker",
   "type": "module",
-  "version": "1.0.18",
+  "version": "1.0.19",
   "description": "Custom Windy Picker,  for windy-plugins",
   "repository": {
     "type": "git",
