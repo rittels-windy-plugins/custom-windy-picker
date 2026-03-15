@@ -118,6 +118,12 @@ function getPickerMarker() {
 
         marker.openMarker = (latLon) => {
             latLon.source = "custom-picker";
+
+            if (!latLon.lat && latLon.params) { // then it was opened by W.broadcast.fire("rqstOpen")
+                latLon.lat=latLon.params.lat;
+                latLon.lon=latLon.params.lon;
+            }
+
             const emitMessage = map.hasLayer(marker)
                 ? "pickerMoved"
                 : "pickerOpened";
